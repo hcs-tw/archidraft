@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoCAD Web 功能</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #canvas {
+            border: 1px solid black;
+            display: block;
+            margin: 20px auto;
+            cursor: crosshair;
+        }
+        .controls {
+            margin: 10px;
+            text-align: center;
+        }
+        #totalArea {
+            font-size: 20px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="addRoom()">新增預設房間</button>
+        <br>
+        <input type="text" id="textInput" placeholder="輸入空間名稱...">
+        <input type="number" id="areaInput" placeholder="輸入面積 (m²)">
+        <button onclick="addRoomByArea()">根據面積生成房間</button>
+        <input type="color" id="colorPicker" value="#ff0000" onchange="changeRoomColor()">
+        <br>
+        <button onclick="deleteRoom()">刪除選中房間</button>
+        <span id="totalArea">總面積: 0 m²</span>
+        <br>
+        <!-- 新增的劃線工具選擇 -->
+        <button onclick="toggleDrawLineMode()">劃線工具</button>
+        <input type="color" id="lineColorPicker" value="#000000" onchange="changeLineColor()">
+        <input type="number" id="lineWidth" value="2" onchange="changeLineWidth()" min="1">
+    </div>
+    <canvas id="canvas" width="2000" height="4000"></canvas>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        let rooms = [];
+        let totalArea = 0;
+        let draggingRoom = null;
+        let resizingRoom = null;
+        let offsetX, offsetY, resizeEdge = null;
+
+        let drawingLine = false; // 是否正在繪製線條
+        let lineStartX, lineStartY; // 線條起點
+        let lines = []; // 存儲線條
+        let currentLineColor = "#000000"; // 當前線條顏色
+        let currentLineWidth = 2; // 當前線條寬度
+
+        const RESIZE_MARGIN = 10; // 用於判斷是否拖動邊界
+        const GRID_SIZE = 40; // 每個格子代表 4 m²，所以格子邊長是 40px
+
+        class Room {
+            constructor(x, y, width, height, color, text) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.color = color;
+                this.selected = false;
+                this.text = text; // 新增文字註解屬性
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.fillStyle = "#000000";
+                ctx.font = "16px Arial";
+                const area = (this.width * this.height) / (GRID_SIZE * GRID_SIZE) * 4; // 轉換為平方米
+                ctx.fillText(`${area.toFixed(2)} m²`, this.x + this.width / 2 - 30, this.y + this.height / 2);
+                
+                // 根據顏色設置文字顏色
+                const isDarkColor = isDark(this.color);
+                ctx.fillStyle = isDarkColor ? "#FFFFFF" : "#000000"; // 如果顏色是深色，文字為白色，否則為黑色
+                ctx.fillText(this.text, this.x + 10, this.y + 20); // 顯示文字註解
+                
+                // 畫黑色邊界，增加拖動邊界區域
+                if (this.selected) {
+                    ctx.strokeStyle = "#000000";  // 黑色邊框
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(this.x, this.y, this.width, this.height);
+                    ctx.fillStyle = "#FF0000";
+                    ctx.fillRect(this.x + this.width - RESIZE_MARGIN, this.y + this.height - RESIZE_MARGIN, RESIZE_MARGIN, RESIZE_MARGIN); // 右下角調整框
+                } else {
+                    // 沒有選中的時候也畫黑色邊界
+                    ctx.strokeStyle = "#000000";
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(this.x, this.y, this.width, this.height);
+                }
+            }
+
+            updateSize(newWidth, newHeight) {
+                this.width = newWidth;
+                this.height = newHeight;
+            }
+
+            move(newX, newY) {
+                this.x = newX;
+                this.y = newY;
+            }
+
+            isPointInside(px, py) {
+                return px >= this.x && px <= this.x + this.width && py >= this.y && py <= this.y + this.height;
+            }
+
+            isResizeArea(px, py) {
+                return px >= this.x + this.width - RESIZE_MARGIN && px <= this.x + this.width && py >= this.y + this.height - RESIZE_MARGIN && py <= this.y + this.height;
+            }
+
+            setColor(newColor) {
+                this.color = newColor;
+            }
+
+            setText(newText) {
+                this.text = newText;
+            }
+        }
+
+        function isDark(color) {
+            const rgb = hexToRgb(color);
+            const brightness = 0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b;
+            return brightness < 128;
+        }
+
+        function hexToRgb(hex) {
+            let r = 0, g = 0, b = 0;
+            if (hex.length === 4) {
+                r = parseInt(hex[1] + hex[1], 16);
+                g = parseInt(hex[2] + hex[2], 16);
+                b = parseInt(hex[3] + hex[3], 16);
+            } else if (hex.length === 7) {
+                r = parseInt(hex[1] + hex[2], 16);
+                g = parseInt(hex[3] + hex[4], 16);
+                b = parseInt(hex[5] + hex[6], 16);
+            }
+            return { r, g, b };
+        }
+
+        function updateTotalArea() {
+            totalArea = rooms.reduce((acc, room) => acc + (room.width * room.height) / (GRID_SIZE * GRID_SIZE) * 4, 0);
+            document.getElementById("totalArea").textContent = `總面積: ${totalArea.toFixed(2)} m²`;
+        }
+
+        function addRoom() {
+            const color = document.getElementById("colorPicker").value;
+            const room = new Room(50, 50, 4 * GRID_SIZE, 4 * GRID_SIZE, color);  // 初始房間大小為 4x4 格子 (即 16m²)
+            rooms.push(room);
+            drawRooms();
+            updateTotalArea();
+        }
+
+        function addRoomByArea() {
+            const areaInput = document.getElementById("areaInput").value;
+            const area = parseFloat(areaInput);
+            if (isNaN(area) || area <= 0) {
+                alert("請輸入有效的面積！");
+                return;
+            }
+
+            const numOfGrid = area / 4; 
+            const sideLengthInGrid = Math.sqrt(numOfGrid);
+            const sideLengthInPx = sideLengthInGrid * GRID_SIZE;
+
+            const color = document.getElementById("colorPicker").value;
+            const text = document.getElementById("textInput").value;
+            const room = new Room(50, 50, sideLengthInPx, sideLengthInPx, color, text);  
+            rooms.push(room);
+            drawRooms();
+            updateTotalArea();
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = "#D3D3D3";
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x < canvas.width; x += GRID_SIZE) {
+                for (let y = 0; y < canvas.height; y += GRID_SIZE) {
+                    ctx.strokeRect(x, y, GRID_SIZE, GRID_SIZE);
+                }
+            }
+        }
+
+        function drawRooms() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            drawGrid(); 
+            rooms.forEach(room => room.draw());
+            drawLines(); // 在畫房間後畫線條
+        }
+
+        function changeRoomColor() {
+            const color = document.getElementById("colorPicker").value;
+            rooms.forEach(room => {
+                if (room.selected) {
+                    room.setColor(color);
+                }
+            });
+            drawRooms();
+        }
+
+        function deleteRoom() {
+            rooms = rooms.filter(room => !room.selected);
+            drawRooms();
+            updateTotalArea();
+        }
+
+        // 新增的劃線功能
+        function toggleDrawLineMode() {
+            drawingLine = !drawingLine; // 切換繪製線條模式
+        }
+
+        function changeLineColor() {
+            currentLineColor = document.getElementById("lineColorPicker").value;
+        }
+
+        function changeLineWidth() {
+            currentLineWidth = parseInt(document.getElementById("lineWidth").value);
+        }
+
+        function drawLines() {
+            ctx.lineWidth = currentLineWidth;
+            ctx.strokeStyle = currentLineColor;
+            lines.forEach(line => {
+                ctx.beginPath();
+                ctx.moveTo(line.startX, line.startY);
+                ctx.lineTo(line.endX, line.endY);
+                ctx.stroke();
+            });
+        }
+
+        canvas.addEventListener("mousedown", (e) => {
+            const mouseX = e.offsetX;
+            const mouseY = e.offsetY;
+
+            if (drawingLine) {
+                lineStartX = mouseX;
+                lineStartY = mouseY;
+            } else {
+                let selectedRoom = null;
+
+                rooms.forEach(room => {
+                    if (room.isPointInside(mouseX, mouseY)) {
+                        selectedRoom = room;
+                    }
+                });
+
+                if (selectedRoom) {
+                    if (selectedRoom.isResizeArea(mouseX, mouseY)) {
+                        resizingRoom = selectedRoom;
+                        resizeEdge = 'bottom-right';
+                    } else {
+                        draggingRoom = selectedRoom;
+                        offsetX = mouseX - draggingRoom.x;
+                        offsetY = mouseY - draggingRoom.y;
+                        selectedRoom.selected = !selectedRoom.selected; // Toggle selection
+                    }
+                    drawRooms();
+                }
+            }
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+            const mouseX = e.offsetX;
+            const mouseY = e.offsetY;
+            if (draggingRoom) {
+                draggingRoom.move(mouseX - offsetX, mouseY - offsetY);
+                drawRooms();
+                updateTotalArea();
+            } else if (resizingRoom) {
+                if (resizeEdge === 'bottom-right') {
+                    const newWidth = mouseX - resizingRoom.x;
+                    const newHeight = mouseY - resizingRoom.y;
+                    resizingRoom.updateSize(newWidth, newHeight);
+                    drawRooms();
+                    updateTotalArea();
+                }
+            } else if (drawingLine) {
+                // 畫出當前線條的即時預覽
+                ctx.clearRect(0, 0, canvas.width, canvas.height); 
+                drawGrid();
+                drawRooms();
+                ctx.beginPath();
+                ctx.moveTo(lineStartX, lineStartY);
+                ctx.lineTo(mouseX, mouseY);
+                ctx.stroke();
+            }
+        });
+
+        canvas.addEventListener("mouseup", (e) => {
+            if (drawingLine) {
+                const mouseX = e.offsetX;
+                const mouseY = e.offsetY;
+                lines.push({ startX: lineStartX, startY: lineStartY, endX: mouseX, endY: mouseY });
+                drawingLine = false; // 結束繪製
+                drawRooms();
+            } else {
+                draggingRoom = null;
+                resizingRoom = null;
+            }
+        });
+
+        // Initial room drawing
+        drawRooms();
+    </script>
+</body>
+</html>
