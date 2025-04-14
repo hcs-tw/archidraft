@@ -18,6 +18,7 @@
       position: fixed;
       height: 100vh;
       overflow-y: auto;
+	  overflow-x: auto;
     }
     #canvas-container {
       margin-left: 300px;
@@ -240,7 +241,7 @@
 	
      if (e.pointerType === 'mouse' || e.pointerType === 'pen' || e.pointerType === 'touch') {
         // 同樣的功能現在支援滑鼠、觸控筆、觸控手指
-		if (e.pointerType==='pen'){e.preventDefault();}
+		
 		
 	 const rect = canvas.getBoundingClientRect();
       startX = e.clientX - rect.left;
@@ -248,11 +249,13 @@
       const shiftKey = e.shiftKey;
 
       if (drawMode === "line" || drawMode === "freehand") {
+	    e.preventDefault();
         isDrawing = true;
         if (drawMode === "freehand") {
           elements.push({ type: "freehand", color: getColor(), thickness: getThickness(), style: lineStyle, points: [{ x: startX, y: startY }] });
         }
       } else if (drawMode === "room") {
+	  e.preventDefault();
         const name = document.getElementById("room-name").value;
         const area = parseFloat(document.getElementById("room-area").value);
         if (name && !isNaN(area)) {
@@ -308,17 +311,19 @@
 	if (e.pointerType === 'mouse' || e.pointerType === 'pen' || e.pointerType === 'touch') {
         // 現在觸控筆、手指也會進來
         // 可以用 e.clientX / e.clientY 拿到座標
-		if (e.pointerType==='pen'){e.preventDefault();}
+		
    
 	
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       if (isDrawing && drawMode === "freehand") {
+	  e.preventDefault();
         const current = elements[elements.length - 1];
         current.points.push({ x, y });
         draw();
       } else if (dragging && selectedElements.length > 0) {
+	  e.preventDefault();
         selectedElements.forEach(el => {
           if (el.type === "room") {
             el.x = x - offsetX;
@@ -327,6 +332,7 @@
         });
         draw();
       } else if (resizing && selectedResizeElement) {
+	  e.preventDefault();
         selectedResizeElement.width = x - selectedResizeElement.x;
         selectedResizeElement.height = y - selectedResizeElement.y;
         selectedResizeElement.area = ((selectedResizeElement.width / 20) * (selectedResizeElement.height / 20)).toFixed(2);
@@ -340,8 +346,9 @@
 	if (e.pointerType === 'mouse' || e.pointerType === 'pen' || e.pointerType === 'touch') {
         // 針對所有裝置放開的動作
    
-	if (e.pointerType==='pen'){e.preventDefault();}
+	
       if (drawMode === "line" && isDrawing) {
+	  e.preventDefault();
         const rect = canvas.getBoundingClientRect();
         const endX = e.clientX - rect.left;
         const endY = e.clientY - rect.top;
@@ -358,6 +365,7 @@
         saveState();
         draw();
       } else if (dragging || resizing) {
+	  e.preventDefault();
         saveState();
       }
       isDrawing = false;
@@ -366,6 +374,7 @@
     }});
 
     function draw() {
+	e.preventDefault();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       elements.forEach(el => {
         if (el.type === "line") {
