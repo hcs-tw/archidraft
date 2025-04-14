@@ -197,7 +197,8 @@
     let elements = [];
     let undoStack = [], redoStack = [];
     let selectedElements = [];
-
+	let isTouchDragging = false;
+	
     function setMode(mode) {
       drawMode = mode;
       selectedElements = [];
@@ -235,7 +236,8 @@
     }
 
     canvas.addEventListener("mousedown", e => {
-      const rect = canvas.getBoundingClientRect();
+      isTouchDragging = true;
+	  const rect = canvas.getBoundingClientRect();
       startX = e.clientX - rect.left;
       startY = e.clientY - rect.top;
       const shiftKey = e.shiftKey;
@@ -321,7 +323,8 @@
     });
 
     canvas.addEventListener("mouseup", e => {
-      if (drawMode === "line" && isDrawing) {
+      isTouchDragging = false;
+	  if (drawMode === "line" && isDrawing) {
         const rect = canvas.getBoundingClientRect();
         const endX = e.clientX - rect.left;
         const endY = e.clientY - rect.top;
@@ -345,8 +348,8 @@
       resizing = false;
     });
 	
-	function isDrawingMode() {
-    return ['line', 'freehand', 'room', 'column'].includes(mode);
+	function isDrawingOrDraggingMode() {
+    return ['line', 'freehand', 'room', 'column'].includes(mode) || isTouchDragging;
 	}
 
 	canvas.addEventListener("touchstart", function (e) {
@@ -359,10 +362,10 @@
         cancelable: true
     });
     canvas.dispatchEvent(simulatedEvent);
-    if (isDrawingMode()) e.preventDefault();
-	}, { passive: false });
+    if (isDrawingOrDraggingMode()) e.preventDefault();
+}, { passive: false });
 
-	canvas.addEventListener("touchmove", function (e) {
+canvas.addEventListener("touchmove", function (e) {
     if (e.touches.length > 1) return;
     const touch = e.touches[0];
     const simulatedEvent = new MouseEvent("mousemove", {
@@ -372,8 +375,21 @@
         cancelable: true
     });
     canvas.dispatchEvent(simulatedEvent);
-    if (isDrawingMode()) e.preventDefault();
-	}, { passive: false });
+    if (isDrawingOrDraggingMode()) e.preventDefault();
+}, { passive: false });
+
+canvas.addEventListener("touchend", function (e) {
+    const touch = e.changedTouches[0];
+    const simulatedEvent = new MouseEvent("mouseup", {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        bubbles: true,
+        cancelable: true
+    });
+    canvas.dispatchEvent(simulatedEvent);
+    if (isDrawingOrDraggingMode()) e.preventDefault();
+    isTouchDragging = false;
+}, { passive: false });
 
 	canvas.addEventListener("touchend", function (e) {
     const touch = e.changedTouches[0];
