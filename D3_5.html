@@ -362,7 +362,7 @@
         cancelable: true
     });
     canvas.dispatchEvent(simulatedEvent);
-    if (isDrawingOrDraggingMode()) {e.preventDefault();
+    if (isDrawingOrDraggingMode()) {e.preventDefault();}
 }, { passive: false });
 
 canvas.addEventListener("touchmove", function (e) {
@@ -375,8 +375,7 @@ canvas.addEventListener("touchmove", function (e) {
         cancelable: true
     });
     canvas.dispatchEvent(simulatedEvent);
-    if (isDrawingOrDraggingMode()) {e.preventDefault();
-}, { passive: false });
+    if (isDrawingOrDraggingMode()) {e.preventDefault();}}, { passive: false });
 
 canvas.addEventListener("touchend", function (e) {
     const touch = e.changedTouches[0];
@@ -387,7 +386,7 @@ canvas.addEventListener("touchend", function (e) {
         cancelable: true
     });
     canvas.dispatchEvent(simulatedEvent);
-    if (isDrawingOrDraggingMode()) {e.preventDefault();
+    if (isDrawingOrDraggingMode()) {e.preventDefault()};
     isTouchDragging = false;
 }, { passive: false });
 
