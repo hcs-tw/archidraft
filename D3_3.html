@@ -27,7 +27,7 @@
     }
     canvas {
 	
-	 touch-action: none; /* 禁止觸控操作造成的滾動、縮放、拖移 */
+	 touch-action: auto; /* 禁止觸控操作造成的滾動、縮放、拖移 */
       background: repeating-linear-gradient(
         0deg,
         #eee,
@@ -239,6 +239,8 @@
 	e.preventDefault();
      if (e.pointerType === 'mouse' || e.pointerType === 'pen' || e.pointerType === 'touch') {
         // 同樣的功能現在支援滑鼠、觸控筆、觸控手指
+		if (e.pointerType==='pen'){e.preventDefault();}
+		
 	 const rect = canvas.getBoundingClientRect();
       startX = e.clientX - rect.left;
       startY = e.clientY - rect.top;
@@ -300,10 +302,11 @@
     }});
 
     canvas.addEventListener("pointermove", e => {
-	e.preventDefault();
+	
 	if (e.pointerType === 'mouse' || e.pointerType === 'pen' || e.pointerType === 'touch') {
         // 現在觸控筆、手指也會進來
         // 可以用 e.clientX / e.clientY 拿到座標
+		if (e.pointerType==='pen'){e.preventDefault();}
    
 	
       const rect = canvas.getBoundingClientRect();
@@ -331,11 +334,11 @@
     }});
 
     canvas.addEventListener("pointerup", e => {
-	e.preventDefault();
+	
 	if (e.pointerType === 'mouse' || e.pointerType === 'pen' || e.pointerType === 'touch') {
         // 針對所有裝置放開的動作
    
-	
+	if (e.pointerType==='pen'){e.preventDefault();}
       if (drawMode === "line" && isDrawing) {
         const rect = canvas.getBoundingClientRect();
         const endX = e.clientX - rect.left;
