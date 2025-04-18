@@ -82,10 +82,11 @@
     let mode = 'view'; // or 'create'
 
     function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 24.983140137517754, lng: 121.54158416132067 },
-        zoom: 16,
-      });
+      // 建立地圖（先給一個暫時的中心點）
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat: 0, lng: 0 },
+    zoom: 16,
+  });
 
       // 開啟建立寶箱模式
       map.addListener("click", (e) => {
@@ -105,18 +106,27 @@
 	  if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition((pos) => {
       const userLatLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-
-      new google.maps.Marker({
-        position: userLatLng,
-        map: map,
-        icon: {
-          url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png", // 使用者位置圖示
-        },
-        title: "你目前的位置"
-      });
+       
+	    // 將地圖中心設為使用者位置
+        map.setCenter(userLatLng);
+	    
+     // 如果之前已經有 userMarker，就更新位置
+        if (userMarker) {
+          userMarker.setPosition(userLatLng);
+        } else {
+          // 第一次建立使用者位置圖示
+          userMarker = new google.maps.Marker({
+            position: userLatLng,
+            map: map,
+            icon: {
+              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            },
+            title: "你目前的位置",
+          });
+        }
 
       // 可選：讓地圖自動以使用者為中心
-      map.setCenter(userLatLng);
+      
       map.setZoom(18); // 放大一點
     });
   }
