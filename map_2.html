@@ -45,20 +45,19 @@
   </style>
 </head>
 <body>
-<div id="distanceInfo" style=" display: none;
+<div id="distanceInfo" style="
   position: fixed;
-  bottom: 20px;
-  left: 10px;
-  right: 10px;
+  top: 0;
+  left: 0;
+  width: 100%;
   padding: 10px;
-  background: rgba(255,255,255,0.95);
-  color: black;
-  border: 2px solid #333;
-  font-size: 16px;
-  z-index: 9999;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 18px;
   text-align: center;
+  z-index: 9999;
+  display: none; /* 一開始先隱藏，之後再用 JS 顯示 */
 ">
-<span id="secretMessage"></span>
 </div>
   <div id="map"></div>
 
