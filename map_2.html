@@ -122,8 +122,6 @@
         // 顯示「正在定位中」的提示
   const loadingDiv = document.getElementById('loadingText');
   loadingDiv.style.display = 'block';
-
-
 	      
 	  if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition((pos) => {
@@ -147,14 +145,7 @@
           });
         }
      // 可選：讓地圖自動以使用者為中心  
-      map.setZoom(18); // 放大一點
- // 抓到後就隱藏提示
-      loadingDiv.style.display = 'none';
-    }
-
-
-
-	    
+      map.setZoom(18); // 放大一點	    
     });
   }
 	
