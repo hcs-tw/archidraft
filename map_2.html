@@ -80,7 +80,8 @@
     let treasureLatLng = null;
     let treasureMessage = "";
     let mode = 'view'; // or 'create'
-
+    let userMarker = null;
+	  
     function initMap() {
       // 建立地圖（先給一個暫時的中心點）
   map = new google.maps.Map(document.getElementById("map"), {
