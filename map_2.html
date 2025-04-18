@@ -45,7 +45,21 @@
   </style>
 </head>
 <body>
-<div id="distanceInfo" style="margin-top: 10px; font-size: 16px; color: #555;"></div>
+<div id="distanceInfo" style=" display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 10px;
+  right: 10px;
+  padding: 10px;
+  background: rgba(255,255,255,0.95);
+  color: black;
+  border: 2px solid #333;
+  font-size: 16px;
+  z-index: 9999;
+  text-align: center;
+">
+<span id="secretMessage"></span>
+</div>
   <div id="map"></div>
 
   <div id="messageBox">
