@@ -44,17 +44,17 @@
       const marker = new google.maps.Marker({
         position: myLatLng,
         map,
-        icon: "https://hcs-tw.github.io/archidraft/cat1.png", // 你自己的 icon URL
-		scaledSize: new google.maps.Size(30, 30),  // 寬度、高度（單位：像素）
-        title: "我是漫畫人!",
+        icon: {url:"https://hcs-tw.github.io/archidraft/cat1.png", // 你自己的 icon URL
+		scaledSize: new google.maps.Size(50, 50)},
+	title: "不要點我...",
       });
 
       const contentString = `
         <div class="custom-info">
           <img src="https://hcs-tw.github.io/archidraft/cat2.png" alt="興哥">
           <div>
-            <strong>興哥</strong><br>
-            喵喵喵~
+            <strong></strong><br>
+            喵~
           </div>
         </div>
       `;
