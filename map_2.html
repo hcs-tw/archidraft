@@ -86,7 +86,7 @@
     function initMap() {
       // 建立地圖（先給一個暫時的中心點）
   map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 25.04159352276, lng: 121.54382556808761 },
+    center: { lat: 25.082308480428004, lng: 121.56881917795711 }, 
     zoom: 16,
   });
 
@@ -101,8 +101,8 @@
       // 若 URL 含 #view 就切成解鎖模式
       if (location.hash === '#view') {
         mode = 'view';
-	treasureLatLng = new google.maps.LatLng(25.052540883068914, 121.52042780739069); // 你預設的寶箱位置
-	treasureMessage = "🎉 恭喜得到黃中興贈送的starbuck星冰樂一杯!!! 💖";
+	treasureLatLng = new google.maps.LatLng(25.082339271907504, 121.56709267328641); // 你預設的寶箱位置
+	treasureMessage = "🎉 恭喜! 請記得送黃中興starbuck星冰樂一杯!!! 💖";
 	placeTreasureMarker();
 	checkProximity();
  
